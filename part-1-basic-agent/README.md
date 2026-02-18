@@ -1,9 +1,3 @@
-# ✅ README.md (For part-1-basic-agent)
-
-You can use this:
-
----
-
 # Part 1 — Basic Planning Agent
 
 This is the simplest possible AI agent.
