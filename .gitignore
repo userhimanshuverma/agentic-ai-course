@@ -34,6 +34,7 @@ ENV/
 
 # Memory storage (user-specific)
 memory_store.json
+support_memory.json
 
 # OS
 .DS_Store
