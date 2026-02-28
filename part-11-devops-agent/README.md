@@ -1,115 +1,79 @@
 # DevOps Monitoring Agent
 
-A simple AI-powered DevOps agent that monitors your system and suggests actions.
+A simple AI-powered agent that monitors your system using local Mistral AI.
 
 ## What It Does
 
-1. **Monitors** your system (CPU, memory, disk, processes)
-2. **Thinks** using AI (Mistral via Ollama)
-3. **Suggests** what to do based on metrics
+1. **Monitors** CPU, memory, disk, and processes
+2. **Thinks** using Mistral AI via Ollama
+3. **Shows** results in a clean format
 
 ## Prerequisites
 
 - Python 3.8+
-- [Ollama](https://ollama.com/) installed
+- Ollama installed: https://ollama.com
 - Mistral model: `ollama pull mistral`
 
-## Installation
+## Install
 
 ```bash
 cd part-11-devops-agent
-pip install -r requirements.txt
+pip install psutil requests
 ```
 
-## Usage
+## Run
 
-### 1. Start Ollama
-
+Start Ollama in one terminal:
 ```bash
 ollama serve
 ```
 
-### 2. Run the Agent
-
+Run the agent in another:
 ```bash
 python agent.py
 ```
 
-Enter a goal like:
+## Example Goals
+
 - `Check system health`
-- `Monitor CPU`
+- `What processes are running?`
+- `Check CPU usage`
 - `Check memory`
 
-### Example Output
+## Example Output
 
 ```
-🎯 Goal: Check system health
+🎯 Goal: What processes are running?
 ⚙️  Max steps: 10
 ──────────────────────────────────────────────────
 
 🔄 Step 1
-🧠 Action: Collect system metrics
-🔧 Tool: get_all_metrics
+🧠 Action: get_process_metrics
+🔧 Tool: get_process_metrics
+
+📋 Top Processes:
+----------------------------------------
+Name                 CPU %      Memory %
+----------------------------------------
+ollama.exe           139.6      8.9
+chrome.exe           13.5       2.8
+python.exe           3.5        0.2
+...
+
 📊 Status: complete
 
 ✅ Goal complete!
-
-==================================================
-📊 REPORT
-==================================================
-Goal: Check system health
-Complete: Yes
-Steps: 1
-Time: 2.5s
-==================================================
 ```
 
-## Project Structure
+## Files
 
-```
-part-11-devops-agent/
-├── agent.py       # Main agent
-├── tools.py       # System monitoring
-├── reasoning.py   # AI with Ollama
-├── config.py      # Settings
-├── test_agent.py  # Tests
-└── requirements.txt
-```
+- `agent.py` - Main agent
+- `tools.py` - System monitoring
+- `reasoning.py` - AI with Ollama
+- `config.py` - Settings
 
-## How It Works
-
-```
-User Goal → Collect Metrics → AI Analysis → Action
-                ↑___________________________|
-                    (loop until complete)
-```
-
-## Testing
+## Test
 
 ```bash
 python test_agent.py
 ```
-
-## Customization
-
-Edit `config.py`:
-
-```python
-@dataclass
-class Config:
-    max_steps: int = 10      # More/fewer steps
-    max_time: int = 300      # Timeout in seconds
-    ollama_url: str = "http://localhost:11434"
-```
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| "Ollama error" | Start Ollama: `ollama serve` |
-| "Model not found" | Install: `ollama pull mistral` |
-| High CPU | Normal - AI is thinking |
-
-## License
-
-MIT
