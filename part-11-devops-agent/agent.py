@@ -98,6 +98,9 @@ class DevOpsAgent:
         # Execute tool
         result = self._run_tool(ai_result.tool_to_use)
         
+        # Show result
+        self._show_result(ai_result.tool_to_use, result)
+        
         status = "complete" if ai_result.is_complete else "continue"
         print(f"📊 Status: {status}")
         
@@ -110,12 +113,33 @@ class DevOpsAgent:
             "get_memory_metrics": self.monitor.get_memory_metrics,
             "get_disk_metrics": self.monitor.get_disk_metrics,
             "get_network_metrics": self.monitor.get_network_metrics,
-            "get_process_metrics": lambda: self.monitor.get_process_metrics(5),
+            "get_process_metrics": lambda: self.monitor.get_process_metrics(10),
             "get_all_metrics": self.monitor.get_all_metrics,
         }
         
         tool = tools.get(tool_name, self.monitor.get_all_metrics)
         return tool()
+    
+    def _show_result(self, tool_name: str, result: Any):
+        """Display tool result to user"""
+        if tool_name == "get_process_metrics":
+            print("\n📋 Top Processes:")
+            print("-" * 40)
+            print(f"{'Name':<20} {'CPU %':<10} {'Memory %':<10}")
+            print("-" * 40)
+            for proc in result:
+                print(f"{proc['name']:<20} {proc['cpu_percent']:<10.1f} {proc['memory_percent']:<10.1f}")
+        elif tool_name == "get_cpu_metrics":
+            print(f"\n📊 CPU Usage: {result.percent}% ({result.status})")
+        elif tool_name == "get_memory_metrics":
+            print(f"\n📊 Memory: {result.used_gb:.1f} GB / {result.total_gb:.1f} GB ({result.percent}%)")
+        elif tool_name == "get_disk_metrics":
+            print(f"\n📊 Disk: {result.used_gb:.1f} GB / {result.total_gb:.1f} GB ({result.percent}%)")
+        elif tool_name == "get_all_metrics":
+            print(f"\n📊 System Overview:")
+            print(f"   CPU: {result['cpu'].percent}%")
+            print(f"   Memory: {result['memory'].percent}%")
+            print(f"   Disk: {result['disk'].percent}%")
     
     def _timeout(self) -> bool:
         """Check if timed out"""
