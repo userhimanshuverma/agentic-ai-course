@@ -26,7 +26,8 @@ logger = logging.getLogger(__name__)
 
 class ReasoningMode(Enum):
     """Available reasoning modes"""
-    LOCAL = "local"      # Use local Mistral model
+    OLLAMA = "ollama"    # Use Ollama local API (recommended)
+    LOCAL = "local"      # Use local Mistral model via transformers
     API = "api"          # Use HuggingFace Inference API
     MOCK = "mock"        # Use mock responses (for testing)
 
@@ -56,20 +57,26 @@ class MistralReasoner:
         print(result.action)
     """
     
-    def __init__(self, mode: ReasoningMode = ReasoningMode.MOCK, api_token: Optional[str] = None):
+    def __init__(self, mode: ReasoningMode = ReasoningMode.MOCK, api_token: Optional[str] = None, ollama_url: str = "http://localhost:11434"):
         """
         Initialize the reasoning engine.
         
         Args:
-            mode: Reasoning mode (LOCAL, API, or MOCK)
+            mode: Reasoning mode (OLLAMA, LOCAL, API, or MOCK)
             api_token: HuggingFace API token (required for API mode)
+            ollama_url: Ollama API URL (default: http://localhost:11434)
         """
         self.mode = mode
         self.api_token = api_token or os.getenv("HF_API_TOKEN")
+        self.ollama_url = ollama_url or os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.model = None
         self.tokenizer = None
         
-        if mode == ReasoningMode.LOCAL:
+        if mode == ReasoningMode.OLLAMA:
+            if not self._check_ollama():
+                logger.warning("Ollama not available, falling back to MOCK mode")
+                self.mode = ReasoningMode.MOCK
+        elif mode == ReasoningMode.LOCAL:
             self._init_local_model()
         elif mode == ReasoningMode.API:
             if not self.api_token:
@@ -78,12 +85,55 @@ class MistralReasoner:
         
         logger.info(f"MistralReasoner initialized in {self.mode.value} mode")
     
+    def _check_ollama(self) -> bool:
+        """Check if Ollama is running"""
+        try:
+            import requests
+            response = requests.get(f"{self.ollama_url}/api/tags", timeout=5)
+            if response.status_code == 200:
+                models = response.json().get("models", [])
+                model_names = [m.get("name", "") for m in models]
+                logger.info(f"Ollama available with models: {model_names}")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ollama check failed: {e}")
+            return False
+    
+    def _generate_ollama(self, prompt: str) -> str:
+        """Generate response using Ollama API"""
+        try:
+            import requests
+            
+            url = f"{self.ollama_url}/api/generate"
+            
+            payload = {
+                "model": "mistral",
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.7,
+                    "num_predict": 200
+                }
+            }
+            
+            logger.info("Sending request to Ollama...")
+            response = requests.post(url, json=payload, timeout=60)
+            response.raise_for_status()
+            
+            result = response.json()
+            return result.get("response", "")
+            
+        except Exception as e:
+            logger.error(f"Ollama generation failed: {e}")
+            return self._generate_mock(prompt)
+    
     def _init_local_model(self):
-        """Initialize local Mistral model (loads on first use)"""
+        """Initialize local Mistral model via transformers (loads on first use)"""
         try:
             from transformers import AutoModelForCausalLM, AutoTokenizer
             
-            logger.info("Loading Mistral model (this may take a moment)...")
+            logger.info("Loading Mistral model via transformers (this may take a moment)...")
             
             # Use a smaller model for faster loading
             # For production, use "mistralai/Mistral-7B-Instruct-v0.2"
@@ -303,7 +353,9 @@ class MistralReasoner:
         prompt = self._build_prompt(metrics, goal)
         
         # Generate response based on mode
-        if self.mode == ReasoningMode.LOCAL:
+        if self.mode == ReasoningMode.OLLAMA:
+            response = self._generate_ollama(prompt)
+        elif self.mode == ReasoningMode.LOCAL:
             response = self._generate_local(prompt)
         elif self.mode == ReasoningMode.API:
             response = self._generate_api(prompt)
@@ -322,17 +374,26 @@ Goal: {goal}
 System Metrics:
 {json.dumps(metrics, indent=2, default=str)}
 
+Available Tools (use ONLY these exact names):
+- get_cpu_metrics: Get CPU usage and frequency
+- get_memory_metrics: Get RAM usage statistics  
+- get_disk_metrics: Get disk usage information
+- get_network_metrics: Get network I/O statistics
+- get_process_metrics: Get top processes by CPU (parameters: {{"top_n": 5}})
+- get_all_metrics: Get all system metrics at once
+- detect_anomalies: Detect abnormal spikes in metrics
+
 Based on these metrics, determine:
 1. What action should be taken?
 2. Why is this action needed?
-3. What tool should be used next?
+3. What tool should be used next? (MUST be one of the available tools above)
 4. Is the goal complete?
 
-Respond in JSON format:
+Respond ONLY in JSON format:
 {{
     "action": "Brief action description",
     "reasoning": "Detailed explanation",
-    "tool_to_use": "tool_name",
+    "tool_to_use": "get_all_metrics",
     "parameters": {{}},
     "confidence": 0.8,
     "is_complete": false
@@ -386,19 +447,20 @@ Respond in JSON format:
 
 
 # Convenience function
-def get_reasoner(mode: str = "mock", api_token: Optional[str] = None) -> MistralReasoner:
+def get_reasoner(mode: str = "mock", api_token: Optional[str] = None, ollama_url: str = "http://localhost:11434") -> MistralReasoner:
     """
     Get a configured MistralReasoner instance.
     
     Args:
-        mode: "local", "api", or "mock"
-        api_token: HuggingFace API token
+        mode: "ollama", "local", "api", or "mock"
+        api_token: HuggingFace API token (for API mode)
+        ollama_url: Ollama API URL (for Ollama mode)
     
     Returns:
         Configured MistralReasoner
     """
     mode_enum = ReasoningMode(mode.lower())
-    return MistralReasoner(mode=mode_enum, api_token=api_token)
+    return MistralReasoner(mode=mode_enum, api_token=api_token, ollama_url=ollama_url)
 
 
 if __name__ == "__main__":

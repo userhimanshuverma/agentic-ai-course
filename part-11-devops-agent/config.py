@@ -35,8 +35,9 @@ class AgentConfig:
     tool_timeout: int = 30  # seconds per tool call
     
     # Reasoning Configuration
-    reasoning_mode: str = "mock"  # "local", "api", or "mock"
+    reasoning_mode: str = "mock"  # "ollama", "local", "api", or "mock"
     hf_api_token: Optional[str] = None
+    ollama_url: str = "http://localhost:11434"
     
     # Monitoring Thresholds
     cpu_warning: float = 70.0
@@ -62,6 +63,7 @@ class AgentConfig:
         # Reasoning
         self.reasoning_mode = os.getenv("AGENT_REASONING_MODE", self.reasoning_mode)
         self.hf_api_token = os.getenv("HF_API_TOKEN", self.hf_api_token)
+        self.ollama_url = os.getenv("OLLAMA_URL", self.ollama_url)
         
         # Thresholds
         self.cpu_warning = float(os.getenv("CPU_WARNING", self.cpu_warning))

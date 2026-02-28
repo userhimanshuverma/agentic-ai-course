@@ -4,6 +4,9 @@
 # System monitoring - cross-platform CPU, memory, disk metrics
 psutil>=5.9.0
 
+# HTTP client for API calls (Ollama, HuggingFace)
+requests>=2.28.0
+
 # AI/ML for reasoning
 # Option 1: Hugging Face transformers (recommended for beginners)
 transformers>=4.30.0

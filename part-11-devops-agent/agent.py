@@ -114,7 +114,8 @@ class DevOpsAgent:
         self.monitor = get_monitor()
         self.reasoner = get_reasoner(
             mode=self.config.reasoning_mode,
-            api_token=self.config.hf_api_token
+            api_token=self.config.hf_api_token,
+            ollama_url=self.config.ollama_url
         )
         
         # Execution state
