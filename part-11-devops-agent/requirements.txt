@@ -1,25 +1,2 @@
-# Part 11: DevOps Monitoring Agent
-# Requirements for system monitoring with AI-powered reasoning
-
-# System monitoring - cross-platform CPU, memory, disk metrics
 psutil>=5.9.0
-
-# HTTP client for API calls (Ollama, HuggingFace)
 requests>=2.28.0
-
-# AI/ML for reasoning
-# Option 1: Hugging Face transformers (recommended for beginners)
-transformers>=4.30.0
-torch>=2.0.0
-
-# Option 2: For local inference with llama.cpp (lighter weight)
-# llama-cpp-python>=0.2.0
-
-# HTTP client for API calls (if using HuggingFace Inference API)
-requests>=2.28.0
-
-# Environment variable management
-python-dotenv>=1.0.0
-
-# Optional: For better terminal output
-# colorama>=0.4.6  # Uncomment for Windows color support
