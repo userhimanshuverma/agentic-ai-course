@@ -72,16 +72,21 @@ class SupportAgent(Agent):
         })
         print(f"  Created ticket: {ticket}")
         
+        # Extract ticket ID from string representation
+        import re
+        ticket_id_match = re.search(r"'ticket_id': '([^']+)'", ticket)
+        ticket_id = ticket_id_match.group(1) if ticket_id_match else "UNKNOWN"
+        
         self.client.call_tool("slack_send_message", {
             "channel": "support",
-            "message": f"New ticket: {ticket['ticket_id']}"
+            "message": f"New ticket: {ticket_id}"
         })
         print(f"  Notified team on Slack")
         
         self.client.call_tool("email_send", {
             "to": customer,
             "subject": "Ticket Created",
-            "body": f"We've created ticket {ticket['ticket_id']} for your issue."
+            "body": f"We've created ticket {ticket_id} for your issue."
         })
         print(f"  Sent acknowledgment email")
         
