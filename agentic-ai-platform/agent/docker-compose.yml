@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Agent API Server
+  agent:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - LOG_LEVEL=INFO
+      - CHROMA_DB_PATH=/app/chroma_db
+      - SAFE_DIRECTORY=/app/safe_workspace
+    volumes:
+      - ./logs:/app/logs
+      - ./safe_workspace:/app/safe_workspace
+      - chroma_data:/app/chroma_db
+    depends_on:
+      - ollama
+      - chromadb
+    networks:
+      - agent_network
+    command: python main.py --api
+
+  # MCP Server (stdio transport)
+  mcp-server:
+    build: .
+    environment:
+      - MCP_TRANSPORT=stdio
+    volumes:
+      - ./safe_workspace:/app/safe_workspace
+    networks:
+      - agent_network
+    command: python -m agentic_ai.mcp_server.server
+    stdin_open: true
+    tty: true
+
+  # Ollama (Local LLM)
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - agent_network
+    # Pull mistral model on first start
+    entrypoint: >
+      sh -c "
+        ollama serve &
+        sleep 5
+        ollama pull mistral
+        wait
+      "
+
+  # ChromaDB (Vector Database)
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+    networks:
+      - agent_network
+
+volumes:
+  ollama_data:
+  chroma_data:
+
+networks:
+  agent_network:
+    driver: bridge

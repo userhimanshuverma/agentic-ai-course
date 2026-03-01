@@ -1,0 +1,20 @@
+# Core dependencies
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+requests>=2.31.0
+
+# MCP and AI
+chromadb>=0.4.18
+sentence-transformers>=2.2.2
+
+# System monitoring (optional but recommended)
+psutil>=5.9.6
+
+# Utilities
+python-dotenv>=1.0.0
+
+# Development dependencies (optional)
+pytest>=7.4.0
+black>=23.0.0
+mypy>=1.7.0
