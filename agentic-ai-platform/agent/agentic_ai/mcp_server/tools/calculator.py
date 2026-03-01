@@ -75,22 +75,24 @@ class CalculatorTool:
     
     def _evaluate(self, expression: str) -> float:
         """Safely evaluate mathematical expression."""
+        import math
+        
         # Replace common math functions
         expression = expression.lower()
         expression = expression.replace("^", "**")
         expression = expression.replace("pi", str(3.14159265359))
         expression = expression.replace("e", str(2.71828182846))
         
-        # Handle sqrt, log, sin, cos, tan
-        expression = re.sub(r'sqrt\(([^)]+)\)', r'(__import__("math").sqrt(\1))', expression)
-        expression = re.sub(r'log\(([^)]+)\)', r'(__import__("math").log(\1))', expression)
-        expression = re.sub(r'sin\(([^)]+)\)', r'(__import__("math").sin(\1))', expression)
-        expression = re.sub(r'cos\(([^)]+)\)', r'(__import__("math").cos(\1))', expression)
-        expression = re.sub(r'tan\(([^)]+)\)', r'(__import__("math").tan(\1))', expression)
+        # Handle sqrt, log, sin, cos, tan - use math prefix directly
+        expression = re.sub(r'sqrt\(([^)]+)\)', r'math.sqrt(\1)', expression)
+        expression = re.sub(r'log\(([^)]+)\)', r'math.log(\1)', expression)
+        expression = re.sub(r'sin\(([^)]+)\)', r'math.sin(\1)', expression)
+        expression = re.sub(r'cos\(([^)]+)\)', r'math.cos(\1)', expression)
+        expression = re.sub(r'tan\(([^)]+)\)', r'math.tan(\1)', expression)
         
-        # Evaluate safely
+        # Evaluate safely with math module available
         try:
-            result = eval(expression, {"__builtins__": {}}, {"math": __import__("math")})
+            result = eval(expression, {"__builtins__": {}}, {"math": math})
             return round(result, 10)
         except Exception as e:
             raise ValueError(f"Invalid expression: {str(e)}")

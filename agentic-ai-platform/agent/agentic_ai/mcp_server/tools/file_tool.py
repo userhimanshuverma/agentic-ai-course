@@ -41,8 +41,10 @@ class FileTool:
     
     def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute file operation."""
-        operation = arguments.get("operation")
-        filename = arguments.get("filename", "")
+        # Handle both 'operation' and 'action' parameter names (LLM may use either)
+        operation = arguments.get("operation") or arguments.get("action")
+        # Handle both 'filename' and 'path' parameter names (LLM may use either)
+        filename = arguments.get("filename") or arguments.get("path") or ""
         
         if not filename:
             return {

@@ -111,11 +111,50 @@ class CodeExecutorTool:
     
     def _execute_sandboxed(self, code: str, timeout: int) -> str:
         """Execute code in restricted environment."""
-        # Create restricted globals
+        import builtins
+        
+        # Create restricted builtins with print allowed
         safe_builtins = {
-            name: getattr(__builtins__, name)
-            for name in dir(__builtins__)
-            if name not in self.DANGEROUS_BUILTINS and not name.startswith('_')
+            "print": builtins.print,
+            "range": builtins.range,
+            "len": builtins.len,
+            "str": builtins.str,
+            "int": builtins.int,
+            "float": builtins.float,
+            "bool": builtins.bool,
+            "list": builtins.list,
+            "dict": builtins.dict,
+            "tuple": builtins.tuple,
+            "set": builtins.set,
+            "enumerate": builtins.enumerate,
+            "zip": builtins.zip,
+            "map": builtins.map,
+            "filter": builtins.filter,
+            "sum": builtins.sum,
+            "min": builtins.min,
+            "max": builtins.max,
+            "abs": builtins.abs,
+            "round": builtins.round,
+            "pow": builtins.pow,
+            "divmod": builtins.divmod,
+            "chr": builtins.chr,
+            "ord": builtins.ord,
+            "hex": builtins.hex,
+            "bin": builtins.bin,
+            "oct": builtins.oct,
+            "format": builtins.format,
+            "repr": builtins.repr,
+            "sorted": builtins.sorted,
+            "reversed": builtins.reversed,
+            "any": builtins.any,
+            "all": builtins.all,
+            "type": builtins.type,
+            "isinstance": builtins.isinstance,
+            "hasattr": builtins.hasattr,
+            "getattr": builtins.getattr,
+            "setattr": builtins.setattr,
+            "dir": builtins.dir,
+            "help": lambda x: str(x),
         }
         
         # Add safe modules
